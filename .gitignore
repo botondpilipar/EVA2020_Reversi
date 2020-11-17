@@ -50,3 +50,10 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+
+# Integrated Development Environment files, folders
+*.cache
+.suo
+obj
+.vs
+bin
