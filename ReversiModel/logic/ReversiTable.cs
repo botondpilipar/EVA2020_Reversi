@@ -13,7 +13,9 @@ namespace kd417d.eva
     public class ReversiTable
     {
         #region Fields
-        private TableData _data;
+        // Public table data is for testing purposes only
+        public TableData TableData { get; }
+
         private TimeSpan _timeEllapsed;
         private reversi.TableLogic _logic;
         private ReversiColor _currentlyStepping;
@@ -42,13 +44,13 @@ namespace kd417d.eva
             _userTime.Interval = 1000;
             _userTime.Tick += new EventHandler((obj, a) => _timeEllapsed.Add(TimeSpan.FromSeconds(1)));
             _timeEllapsed = TimeSpan.FromSeconds(0);
-            _logic = new reversi.TableLogic(_data, dimension);
+            _logic = new reversi.TableLogic(TableData, dimension);
             _currentlyStepping = ReversiColor.BLACK;
 
             // Add 4 starting 
             reversi.TableLogic.GetInitial(dimension.Horizontal, dimension.Vertical)
                                 .ForEach(block => 
-                                    _data.Add(new Dimension<uint>(block.Horizontal, block.Vertical), block.Disk));
+                                    TableData.Add(new Dimension<uint>(block.Horizontal, block.Vertical), block.Disk));
         }
         #endregion
         #region Events
@@ -73,11 +75,11 @@ namespace kd417d.eva
             var affectedAfterStep = _logic.GetAffectedDisksOnStep(stepTo);
             if(affectedAfterStep.Count() != 0)
             {
-                _data.Add(new Dimension<uint>(horizontal, vertical), new ReversiDisk(_currentlyStepping));
+                TableData.Add(new Dimension<uint>(horizontal, vertical), new ReversiDisk(_currentlyStepping));
                 _currentlyStepping = ReversiColorFunctions.NextColor(_currentlyStepping);
                 foreach(var elem in affectedAfterStep)
                 {
-                    _data[elem].Flip();
+                    TableData[elem].Flip();
                 }
                 RaiseTableUpdatedEvent(new TableUpdateEventArgs()
                 {
@@ -89,10 +91,10 @@ namespace kd417d.eva
         public void NewGame(Dimension<uint> dimension)
         {
             this.dimension = dimension;
-            _data.Clear();
+            TableData.Clear();
             reversi.TableLogic.GetInitial(dimension.Horizontal, dimension.Vertical)
                                 .ForEach(block =>
-                                    _data.Add(new Dimension<uint>(block.Horizontal, block.Vertical), block.Disk));
+                                    TableData.Add(new Dimension<uint>(block.Horizontal, block.Vertical), block.Disk));
             _timeEllapsed = TimeSpan.FromSeconds(0);
             RaiseNewGameEvent(new NewGameEventArgs
             {
@@ -109,8 +111,8 @@ namespace kd417d.eva
         #region Private Methods
         private List<ReversiBlock> ToReversiBlocks()
         {
-            var result = new List<ReversiBlock>(_data.Count);
-            foreach(var kwp in _data)
+            var result = new List<ReversiBlock>(TableData.Count);
+            foreach(var kwp in TableData)
             {
                 var key = kwp.Key;
                 result.Add(new ReversiBlock(kwp.Key, kwp.Value.color));

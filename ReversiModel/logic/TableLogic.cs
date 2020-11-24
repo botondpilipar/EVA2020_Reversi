@@ -35,11 +35,11 @@ namespace kd417d.eva.reversi
         
         public static uint GetHorizontalDistance(Dimension<uint> a, Dimension<uint> b)
         {
-            return (uint)Math.Abs(a.Horizontal - b.Horizontal);
+            return (uint)Math.Abs((int)a.Horizontal - (int)b.Horizontal);
         }
         public static uint GetVerticalDistance(Dimension<uint> a, Dimension<uint> b)
         {
-            return (uint)Math.Abs(a.Vertical - b.Vertical);
+            return (uint)Math.Abs((int)a.Vertical - (int)b.Vertical);
         }
         public static uint GetLargerDistance(Dimension<uint> a, Dimension<uint> b)
         {
@@ -47,11 +47,11 @@ namespace kd417d.eva.reversi
         }
         public static bool IsHorizontallyAlignedWith(Dimension<uint> a, Dimension<uint> b)
         {
-            return GetVerticalDistance(a, b) == 0;
+            return GetHorizontalDistance(a, b) == 0;
         }
         public static bool IsVerticallyAlignedWith(Dimension<uint> a, Dimension<uint> b)
         {
-            return GetHorizontalDistance(a, b) == 0;
+            return GetVerticalDistance(a, b) == 0;
         }
         public static bool IsDiagonallyAlignedWith(Dimension<uint> a, Dimension<uint> b)
         {
@@ -59,19 +59,19 @@ namespace kd417d.eva.reversi
         }
         public static IEnumerable<Dimension<uint>> TopSideFrom(Dimension<uint> from, IEnumerable<Dimension<uint>> dimensions)
         {
-            return Enumerable.Where(dimensions, (key => key.Vertical > from.Vertical));
+            return Enumerable.Where(dimensions, (key => key.Vertical < from.Vertical));
         }
         public static IEnumerable<Dimension<uint>> BottomSideFrom(Dimension<uint> from, IEnumerable<Dimension<uint>> dimensions)
         {
-            return Enumerable.Where(dimensions, (key => key.Vertical < from.Vertical));
+            return dimensions.Where((key => key.Vertical > from.Vertical));
         }
         public static IEnumerable<Dimension<uint>> LeftSideFrom(Dimension<uint> from, IEnumerable<Dimension<uint>> dimensions)
         {
-            return Enumerable.Where(dimensions, (key => key.Horizontal < from.Horizontal));
+            return dimensions.Where((key => key.Horizontal < from.Horizontal));
         }
         public static IEnumerable<Dimension<uint>> RightSideFrom(Dimension<uint> from, IEnumerable<Dimension<uint>> dimensions)
         {
-            return Enumerable.Where(dimensions, (key => key.Horizontal > from.Horizontal));
+            return dimensions.Where((key => key.Horizontal > from.Horizontal));
         }
         public static IEnumerable<Dimension<uint>> GetNeighBoringPositions(Dimension<uint> a)
         {
