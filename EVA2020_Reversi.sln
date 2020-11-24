@@ -4,10 +4,13 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 VisualStudioVersion = 16.0.30621.155
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EVA2020_Reversi", "EVA2020_Reversi\EVA2020_Reversi.csproj", "{DE82BE8F-4FCD-4A02-8466-B9927F17E9EE}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ReversiModelTest", "ReversiModelTest\ReversiModelTest.csproj", "{2F543B42-7663-4339-9F43-8178598C80E0}"
+	ProjectSection(ProjectDependencies) = postProject
+		{9FB877B3-7A7D-4505-BC50-85B5BF079483} = {9FB877B3-7A7D-4505-BC50-85B5BF079483}
+	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ReversiModel", "ReversiModel\ReversiModel.csproj", "{9FB877B3-7A7D-4505-BC50-85B5BF079483}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ReversiTest", "ReversiTest\ReversiTest.csproj", "{E3A661B6-8287-48B8-A5F4-ECB868E0F8EA}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -19,14 +22,14 @@ Global
 		{DE82BE8F-4FCD-4A02-8466-B9927F17E9EE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DE82BE8F-4FCD-4A02-8466-B9927F17E9EE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DE82BE8F-4FCD-4A02-8466-B9927F17E9EE}.Release|Any CPU.Build.0 = Release|Any CPU
-		{2F543B42-7663-4339-9F43-8178598C80E0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{2F543B42-7663-4339-9F43-8178598C80E0}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{2F543B42-7663-4339-9F43-8178598C80E0}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{2F543B42-7663-4339-9F43-8178598C80E0}.Release|Any CPU.Build.0 = Release|Any CPU
 		{9FB877B3-7A7D-4505-BC50-85B5BF079483}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{9FB877B3-7A7D-4505-BC50-85B5BF079483}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9FB877B3-7A7D-4505-BC50-85B5BF079483}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9FB877B3-7A7D-4505-BC50-85B5BF079483}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E3A661B6-8287-48B8-A5F4-ECB868E0F8EA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E3A661B6-8287-48B8-A5F4-ECB868E0F8EA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E3A661B6-8287-48B8-A5F4-ECB868E0F8EA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E3A661B6-8287-48B8-A5F4-ECB868E0F8EA}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
