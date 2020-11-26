@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Windows.Forms;
 using System.Linq;
+using kd417d.eva.reversi.logic;
 
 namespace kd417d.eva
 {
@@ -13,44 +14,36 @@ namespace kd417d.eva
     public class ReversiTable
     {
         #region Fields
-        // Public table data is for testing purposes only
-        public TableData TableData { get; }
+        // Properties for testing purposes;
+        public TableData Data { get; set; }
+        public Dimension<uint> Dimension { get; set; }
 
         private TimeSpan _timeEllapsed;
-        private reversi.TableLogic _logic;
         private ReversiColor _currentlyStepping;
+        private ReversiBlock _stepRollback;
+
+        [NonSerialized]
+        private IReversiTableLogic _logic;
+        public IReversiTableLogic Logic
+        {
+            set { _logic = value; }
+        }
 
         [NonSerialized]
         private Timer _userTime;
 
-        public Dimension<uint> dimension
-        {
-            get { return dimension; }
-            set
-            {
-                dimension = value;
-
-            }
-        }
         #endregion
 
         #region Constructor
-        public ReversiTable(uint horizontal, uint vertical) : this(new Dimension<uint>(horizontal, vertical))
-        { }
-        public ReversiTable(Dimension<uint> dimension)
+        public ReversiTable()
         {
-            this.dimension = dimension;
             _userTime = new Timer();
             _userTime.Interval = 1000;
             _userTime.Tick += new EventHandler((obj, a) => _timeEllapsed.Add(TimeSpan.FromSeconds(1)));
             _timeEllapsed = TimeSpan.FromSeconds(0);
-            _logic = new reversi.TableLogic(TableData, dimension);
-            _currentlyStepping = ReversiColor.BLACK;
-
-            // Add 4 starting 
-            reversi.TableLogic.GetInitial(dimension.Horizontal, dimension.Vertical)
-                                .ForEach(block => 
-                                    TableData.Add(new Dimension<uint>(block.Horizontal, block.Vertical), block.Disk));
+            Data = new TableData();
+            _currentlyStepping = ReversiTableSettings.FirstSteppingColor;
+            Dimension = ReversiTableSettings.Dimension;
         }
         #endregion
         #region Events
@@ -67,34 +60,46 @@ namespace kd417d.eva
         #region Public Methods
         public void Step(uint horizontal, uint vertical)
         {
+            var playerStepping = _currentlyStepping;
             var stepTo = new Dimension<uint>(horizontal, vertical);
-            if(!(_logic.IsPossiblyAllowedStep(stepTo)))
+            if(!(_logic.IsPossiblyAllowedStep(stepTo)) || _logic.IsAlreadyOnTable(stepTo))
             {
                 return;
             }
-            var affectedAfterStep = _logic.GetAffectedDisksOnStep(stepTo);
-            if(affectedAfterStep.Count() != 0)
+            
+            DoStep(stepTo);
+            var affectedAfterStep = _logic.GetAffectedDisksOnStep(stepTo).ToList();
+
+            if(affectedAfterStep.Count != 0)
             {
-                TableData.Add(new Dimension<uint>(horizontal, vertical), new ReversiDisk(_currentlyStepping));
-                _currentlyStepping = ReversiColorFunctions.NextColor(_currentlyStepping);
                 foreach(var elem in affectedAfterStep)
                 {
-                    TableData[elem].Flip();
+                    Data[elem].Flip();
                 }
                 RaiseTableUpdatedEvent(new TableUpdateEventArgs()
                 {
                     currentlyStepping = _currentlyStepping,
                     data = ToReversiBlocks()
                 });
+
+                if( _logic.IsGameOverScenario())
+                {
+                    RaiseGameOverEvent(new GameOverEventArgs() { winningSide = playerStepping });
+                }
+            }
+            else
+            {
+                Rollback();
             }
         }
         public void NewGame(Dimension<uint> dimension)
         {
-            this.dimension = dimension;
-            TableData.Clear();
-            reversi.TableLogic.GetInitial(dimension.Horizontal, dimension.Vertical)
+            this.Dimension = dimension;
+            Data.Clear();
+            _logic.Dimension = dimension;
+            IReversiTableLogic.GetInitial(dimension.Horizontal, dimension.Vertical)
                                 .ForEach(block =>
-                                    TableData.Add(new Dimension<uint>(block.Horizontal, block.Vertical), block.Disk));
+                                    Data.Add(new Dimension<uint>(block.Horizontal, block.Vertical), block.Disk));
             _timeEllapsed = TimeSpan.FromSeconds(0);
             RaiseNewGameEvent(new NewGameEventArgs
             {
@@ -105,14 +110,30 @@ namespace kd417d.eva
                 },
                 dimensions = dimension
             });
+            _userTime.Start();
+        }
+
+        public void PauseGame()
+        {
+            if(_userTime.Enabled)
+            {
+                _userTime.Stop();
+            }
+        }
+        public void ContinueGame()
+        {
+            if(!_userTime.Enabled)
+            {
+                _userTime.Start();
+            }
         }
         #endregion
 
         #region Private Methods
         private List<ReversiBlock> ToReversiBlocks()
         {
-            var result = new List<ReversiBlock>(TableData.Count);
-            foreach(var kwp in TableData)
+            var result = new List<ReversiBlock>(Data.Count);
+            foreach(var kwp in Data)
             {
                 var key = kwp.Key;
                 result.Add(new ReversiBlock(kwp.Key, kwp.Value.color));
@@ -146,6 +167,22 @@ namespace kd417d.eva
             {
                 UserTimeUpdatedEvent(this, args);
             }
+        }
+        private void DoStep(Dimension<uint> dim)
+        {
+            _stepRollback = new ReversiBlock(dim, _currentlyStepping);
+            Data.Add(dim, new ReversiDisk(_currentlyStepping));
+            _currentlyStepping = ReversiColorFunctions.NextColor(_currentlyStepping);
+        }
+        private void Rollback()
+        {
+            if(_stepRollback != null)
+            {
+                var dim = _stepRollback.Dimension;
+                Data.Remove(dim);
+                _stepRollback = null;
+            }
+
         }
         #endregion
 

@@ -24,8 +24,18 @@ namespace kd417d.eva
     }
     public class ReversiBlock : Tuple<Dimension<uint>, ReversiDisk>
     {
-        public uint Vertical { get; set; }
-        public uint Horizontal { get; set; }
+        public uint Vertical 
+        {
+            get { return Dimension.Vertical; }
+            set { Dimension.Vertical = value; }
+        }
+        public uint Horizontal
+        {
+            get { return Dimension.Horizontal; }
+            set { Dimension.Horizontal = value; }
+        }
+
+        public Dimension<uint> Dimension { get; set; }
         public ReversiDisk Disk { get; set; }
 
         public ReversiBlock(Dimension<uint> dimension, ReversiColor color)
@@ -36,8 +46,7 @@ namespace kd417d.eva
         { }
         public ReversiBlock(uint horizontal, uint vertical, ReversiDisk disk) : base(new Dimension<uint>(horizontal, vertical), disk)
         {
-            this.Vertical = base.Item1.Item2;
-            this.Horizontal = base.Item1.Item1;
+            this.Dimension = new Dimension<uint>(base.Item1.Item1, base.Item1.Item2);
             this.Disk = base.Item2;
         }
 
