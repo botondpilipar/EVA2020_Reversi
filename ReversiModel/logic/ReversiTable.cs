@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using System.Windows.Forms;
 using System.Linq;
+using System.Timers;
 using kd417d.eva.reversi.logic;
 
 namespace kd417d.eva
@@ -17,8 +17,20 @@ namespace kd417d.eva
         // Properties for testing purposes;
         public TableData Data { get; set; }
         public Dimension<uint> Dimension { get; set; }
-
         private TimeSpan _timeEllapsed;
+        private TimeSpan TimeEllapsed 
+        {
+            set 
+            {
+                _timeEllapsed = value;
+                if(!IsPaused())
+                    RaiseUserTimeUpdatedEvent(new UserTimeUpdatedEventArgs() { seconds =TimeEllapsed }); 
+            }
+            get
+            {
+                return _timeEllapsed;
+            }
+        }
         private ReversiColor _currentlyStepping;
         private ReversiBlock _stepRollback;
 
@@ -30,17 +42,19 @@ namespace kd417d.eva
         }
 
         [NonSerialized]
-        private Timer _userTime;
+        private System.Timers.Timer _userTime;
 
         #endregion
 
         #region Constructor
         public ReversiTable()
         {
-            _userTime = new Timer();
-            _userTime.Interval = 1000;
-            _userTime.Tick += new EventHandler((obj, a) => _timeEllapsed.Add(TimeSpan.FromSeconds(1)));
-            _timeEllapsed = TimeSpan.FromSeconds(0);
+            _userTime = new Timer
+            {
+                Interval = 1000,
+                Enabled = true
+            };
+            _userTime.Elapsed += new ElapsedEventHandler(OnTimerTick);
             Data = new TableData();
             _currentlyStepping = ReversiTableSettings.FirstSteppingColor;
             Dimension = ReversiTableSettings.Dimension;
@@ -60,6 +74,8 @@ namespace kd417d.eva
         #region Public Methods
         public void Step(uint horizontal, uint vertical)
         {
+            if (IsPaused()) { return; }
+
             var playerStepping = _currentlyStepping;
             var stepTo = new Dimension<uint>(horizontal, vertical);
             if(!(_logic.IsPossiblyAllowedStep(stepTo)) || _logic.IsAlreadyOnTable(stepTo))
@@ -94,13 +110,14 @@ namespace kd417d.eva
         }
         public void NewGame(Dimension<uint> dimension)
         {
+            if (!IsPaused()) { _userTime.Stop(); }
             this.Dimension = dimension;
             Data.Clear();
             _logic.Dimension = dimension;
             IReversiTableLogic.GetInitial(dimension.Horizontal, dimension.Vertical)
                                 .ForEach(block =>
                                     Data.Add(new Dimension<uint>(block.Horizontal, block.Vertical), block.Disk));
-            _timeEllapsed = TimeSpan.FromSeconds(0);
+            TimeEllapsed = TimeSpan.FromSeconds(0);
             RaiseNewGameEvent(new NewGameEventArgs
             {
                 boardUpdate = new TableUpdateEventArgs
@@ -110,22 +127,17 @@ namespace kd417d.eva
                 },
                 dimensions = dimension
             });
+            TimeEllapsed = TimeSpan.Zero;
             _userTime.Start();
         }
 
         public void PauseGame()
         {
-            if(_userTime.Enabled)
-            {
-                _userTime.Stop();
-            }
+            _userTime.Stop();
         }
         public void ContinueGame()
         {
-            if(!_userTime.Enabled)
-            {
-                _userTime.Start();
-            }
+            _userTime.Start();
         }
         #endregion
 
@@ -184,7 +196,16 @@ namespace kd417d.eva
             }
 
         }
-        #endregion
+        private bool IsPaused()
+        {
+            return !_userTime.Enabled;
+        }
 
+        private void OnTimerTick(object sender, ElapsedEventArgs e)
+        {
+            var updateWith = TimeSpan.FromSeconds(1);
+            TimeEllapsed += updateWith;
+        }
+        #endregion
     }
 }

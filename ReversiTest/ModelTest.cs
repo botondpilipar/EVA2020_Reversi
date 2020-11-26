@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Threading;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using kd417d.eva.test.utility;
 using Moq;
@@ -155,6 +156,55 @@ namespace kd417d.eva.reversi.logic
             ReversiColor firstToStep = _newGameEventSpy.CapturedArguments.First().boardUpdate.currentlyStepping;
             Assert.IsTrue(_gameOverEventSpy.IsEventRaised());
             Assert.AreEqual(firstToStep, _gameOverEventSpy.CapturedArguments.First().winningSide);
+        }
+
+        [TestMethod]
+        public void TestUserTimeEllapsed()
+        {
+            _table.NewGame(new Dimension<uint>(10, 10));
+            Thread.Sleep(1200);
+            var userTimeEventSpyRef = _userTimeUpdatedEventSpy;
+            Assert.IsTrue(_userTimeUpdatedEventSpy.IsEventRaised());
+        }
+
+        [TestMethod]
+        public void TestPauseGame()
+        {
+            _table.NewGame(new Dimension<uint>(10, 10));
+            _table.PauseGame();
+            _userTimeUpdatedEventSpy.CapturedArguments.Clear();
+            _tableUpdateEventSpy.CapturedArguments.Clear();
+
+            Thread.Sleep(1000);
+            _table.Step(3, 4);
+
+            Assert.IsTrue(_userTimeUpdatedEventSpy.IsEmpty());
+            Assert.IsTrue(_tableUpdateEventSpy.IsEmpty());
+        }
+
+        [TestMethod]
+        public void TestContinueGame()
+        {
+            _mockLogic.Setup(p => p.IsGameOverScenario()).Returns(true);
+            _mockLogic.Setup(p => p.IsPossiblyAllowedStep(It.IsAny<Dimension<uint>>())).Returns(true);
+            _mockLogic.Setup(p => p.GetAffectedDisksOnStep(It.IsAny<Dimension<uint>>())).Returns(new List<Dimension<uint>>()
+            {
+                new Dimension<uint>(5, 5),
+            });
+
+            _table.NewGame(new Dimension<uint>(10, 10));
+            _table.PauseGame();
+            _userTimeUpdatedEventSpy.CapturedArguments.Clear();
+            _tableUpdateEventSpy.CapturedArguments.Clear();
+
+            _table.ContinueGame();
+
+            Thread.Sleep(1200);
+
+            _table.Step(2, 3);
+
+            Assert.IsTrue(_userTimeUpdatedEventSpy.IsEventRaised());
+            Assert.IsTrue(_tableUpdateEventSpy.IsEventRaised());
         }
     }
 }

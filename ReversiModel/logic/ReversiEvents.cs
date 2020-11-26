@@ -22,6 +22,6 @@ namespace kd417d.eva
 
     public class UserTimeUpdatedEventArgs : EventArgs
     {
-        public DateTime seconds { get; set; }
+        public TimeSpan seconds { get; set; }
     }
 }
