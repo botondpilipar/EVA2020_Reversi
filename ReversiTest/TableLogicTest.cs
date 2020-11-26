@@ -28,8 +28,19 @@ namespace kd417d.eva.reversi
          *  
          *  Indexed: Horizontal(from left) x Vertical(from top)
          */
-        private Dictionary<Dimension<uint>, ReversiDisk> _gameSetup =
-            new Dictionary<Dimension<uint>, ReversiDisk>()
+        private Dictionary<Dimension<uint>, ReversiDisk> _gameSetup;
+            
+        private Dimension<uint> tableTopLeft = new Dimension<uint>(1, 1);
+        private Dimension<uint> tableBottomRight = new Dimension<uint>(5, 5);
+        private Dimension<uint> tableCentral = new Dimension<uint>(3, 3);
+
+        ISet<T> ToSet<T>(IEnumerable<T> param) { return new HashSet<T>(param); }
+
+        [TestInitialize]
+        public void Setup()
+        {
+            _gameSetup = 
+                new Dictionary<Dimension<uint>, ReversiDisk>()
             {
                 { new Dimension<uint>(1, 1), new ReversiDisk(ReversiColor.WHITE) },
                 { new Dimension<uint>(2, 2), new ReversiDisk(ReversiColor.WHITE) },
@@ -43,13 +54,6 @@ namespace kd417d.eva.reversi
                 { new Dimension<uint>(4, 4), new ReversiDisk(ReversiColor.BLACK) },
                 { new Dimension<uint>(4, 2), new ReversiDisk(ReversiColor.BLACK) }
             };
-        private Dimension<uint> tableTopLeft = new Dimension<uint>(1, 1);
-        private Dimension<uint> tableBottomRight = new Dimension<uint>(5, 5);
-        private Dimension<uint> tableCentral = new Dimension<uint>(3, 3);
-
-        [TestInitialize]
-        public void Setup()
-        {
             _logicDimension = new Dimension<uint>(5, 5);
             _logic = new TableLogic(_gameSetup, _logicDimension);
             _dimA = new Dimension<uint>(2, 3);
@@ -94,16 +98,17 @@ namespace kd417d.eva.reversi
         [TestMethod]
         public void TestIsHorizontallyAlignedWith()
         {
-            Assert.IsTrue(TableLogic.IsHorizontallyAlignedWith(_dimA, _dimD));
-            Assert.IsTrue(TableLogic.IsHorizontallyAlignedWith(
-                new Dimension<uint>(34, 43),
-                new Dimension<uint>(34, 45)));
+             Assert.IsTrue(TableLogic.IsHorizontallyAlignedWith(_dimB, _dimC));
         }
 
         [TestMethod]
         public void TestIsVerticallyAlignedWith()
         {
-            Assert.IsTrue(TableLogic.IsVerticallyAlignedWith(_dimB, _dimC));
+           
+            Assert.IsTrue(TableLogic.IsVerticallyAlignedWith(_dimA, _dimD));
+            Assert.IsTrue(TableLogic.IsVerticallyAlignedWith(
+                new Dimension<uint>(34, 43),
+                new Dimension<uint>(34, 45)));
         }
 
         [TestMethod]
@@ -199,6 +204,120 @@ namespace kd417d.eva.reversi
             var neighboringRandom = TableLogic.GetNeighBoringPositions(randomDimension);
 
             Assert.AreNotEqual(0, neighboringRandom.Where(k => _gameSetup.ContainsKey(k)).Count());
+        }
+
+        [TestMethod]
+        public void TestGetSurroundedByDiagonally()
+        {
+            // Testing regardless or disk color
+            var surroundedInMainDiagonal = _logic.GetSurroundedBy(tableTopLeft, tableBottomRight);
+            var surroundedInReverseMainDiagonal = _logic.GetSurroundedBy(tableBottomRight, tableTopLeft);
+
+            Assert.AreEqual(3, surroundedInMainDiagonal.Count());
+            var diagonal = surroundedInMainDiagonal.ToList();
+            var reverseDiagonal = surroundedInReverseMainDiagonal.ToList();
+
+            // Difference of the two sets are empty set
+            Assert.AreEqual(0, diagonal.Except(reverseDiagonal).Count());
+        }
+
+        [TestMethod]
+        public void TestGetSurroundedByVertically()
+        {
+            // Testing regardless of disk color
+            var dim1 = new Dimension<uint>(4, 1);
+            var dim2 = new Dimension<uint>(4, 5);
+            var surroundedVertically = _logic.GetSurroundedBy(dim2, dim1).ToList();
+            var surroundedVerticallyReverse = _logic.GetSurroundedBy(dim1, dim2).ToList();
+
+            Assert.AreEqual(2, surroundedVertically.Count());
+            Assert.AreEqual(0, surroundedVertically.Except(surroundedVerticallyReverse).Count());
+        }
+
+        [TestMethod]
+        public void TestGetSurroundedByHorizontally()
+        {
+            var dim1 = new Dimension<uint>(1, 2);
+            var dim2 = new Dimension<uint>(5, 2);
+            var surroundedHorizontally = _logic.GetSurroundedBy(dim1, dim2);
+            var surroundedHorizontallyReverse = _logic.GetSurroundedBy(dim2, dim1);
+
+            Assert.AreEqual(3, surroundedHorizontally.Count());
+            Assert.AreEqual(0, surroundedHorizontally.Except(surroundedHorizontallyReverse).Count());
+        }
+
+        [TestMethod]
+        public void TestGetClosesNeighboursOfSameTypeForBlackColor()
+        {
+            var testDimA = new Dimension<uint>(1, 4);
+            var testDimB = new Dimension<uint>(3, 3);
+
+            var expectedNeighborsForA = new List<Dimension<uint>>() {
+                new Dimension<uint>(1, 3),
+                new Dimension<uint>(2, 4)
+            };
+            var expectedNeighborsForB = new List<Dimension<uint>>()
+            {
+                new Dimension<uint>(4, 4),
+                new Dimension<uint>(4, 2),
+                new Dimension<uint>(2, 4),
+                new Dimension<uint>(1, 3)
+            };
+
+            var actualNeighborsForA = _logic.GetClosestNeighBoursOfSameType(testDimA);
+            var actualNeighborsForB = _logic.GetClosestNeighBoursOfSameType(testDimB);
+
+            Assert.AreEqual(expectedNeighborsForA.Count(), actualNeighborsForA.Count());
+            Assert.AreEqual(expectedNeighborsForB.Count(), actualNeighborsForB.Count());
+            Assert.AreEqual(0, expectedNeighborsForA.Except(actualNeighborsForA).Count());
+            Assert.AreEqual(0, expectedNeighborsForB.Except(actualNeighborsForB).Count());
+        }
+
+        [TestMethod]
+        public void TestGetClosesNeighborsOfSameTypeForWhiteColor()
+        {
+            var testDim = new Dimension<uint>(2, 2);
+            var expectedNeighbors = new List<Dimension<uint>>() {
+                new Dimension<uint>(1, 1),
+                new Dimension<uint>(2, 3),
+                new Dimension<uint>(3, 2)
+            };
+
+            var actualNeighbors = _logic.GetClosestNeighBoursOfSameType(testDim);
+
+            Assert.AreEqual(3, actualNeighbors.Count());
+            Assert.AreEqual(0, expectedNeighbors.Except(actualNeighbors).Count());
+        }
+
+        [TestMethod]
+        public void TestGetAffectedDisksOnStepForWhiteColor()
+        {
+            // Step with white to surround vertically
+            var newStep = new Dimension<uint>(2, 5);
+            _gameSetup.Add(newStep, new ReversiDisk(ReversiColor.WHITE));
+            var expectToBeAffected = new List<Dimension<uint>>()
+            {
+                new Dimension<uint>(2, 4)
+            };
+
+            var actualAffected = _logic.GetAffectedDisksOnStep(newStep);
+
+            Assert.AreEqual(expectToBeAffected.Count(), actualAffected.Count());
+            Assert.AreEqual(0, expectToBeAffected.Except(actualAffected).Count());
+
+            // Step with white to surround diagonally
+            var newStepDiag = new Dimension<uint>(5, 5);
+            _gameSetup.Add(newStepDiag, new ReversiDisk(ReversiColor.WHITE));
+            var expectToBeAffectedDiagonally = new List<Dimension<uint>>()
+            {
+                new Dimension<uint>(3, 3),
+                new Dimension<uint>(4, 4)
+            };
+            var closesNeightbor = _logic.GetClosestNeighBoursOfSameType(newStepDiag);
+            var actualAffectedDiagonally = _logic.GetAffectedDisksOnStep(newStepDiag);
+
+            Assert.AreEqual(expectToBeAffectedDiagonally.Count(), actualAffectedDiagonally.Count());
+            Assert.AreEqual(0, expectToBeAffectedDiagonally.Except(actualAffectedDiagonally).Count());
         }
     }
 }

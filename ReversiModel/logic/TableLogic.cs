@@ -47,11 +47,11 @@ namespace kd417d.eva.reversi
         }
         public static bool IsHorizontallyAlignedWith(Dimension<uint> a, Dimension<uint> b)
         {
-            return GetHorizontalDistance(a, b) == 0;
+            return GetVerticalDistance(a, b) == 0;
         }
         public static bool IsVerticallyAlignedWith(Dimension<uint> a, Dimension<uint> b)
         {
-            return GetVerticalDistance(a, b) == 0;
+            return GetHorizontalDistance(a, b) == 0;
         }
         public static bool IsDiagonallyAlignedWith(Dimension<uint> a, Dimension<uint> b)
         {
@@ -101,7 +101,7 @@ namespace kd417d.eva.reversi
             {
                 // Traverse from top to bottom
                 // Exclude starting and ending point, since only the surrounded part is required
-                for(uint i = verticallyOrdered[0].Vertical + 1; i < verticallyOrdered[1].Vertical - 1; ++i)
+                for(uint i = verticallyOrdered[0].Vertical + 1; i < verticallyOrdered[1].Vertical; ++i)
                 {
                     Dimension<uint> place = new Dimension<uint>(a.Horizontal, i);
                     if(_table.ContainsKey(place))
@@ -114,7 +114,7 @@ namespace kd417d.eva.reversi
             {
                 // Traverse from left to right
                 // Exclude starting and ending point, since only the surrounded part is required
-                for (uint i = horizontallyOrdered[0].Horizontal + 1; i < horizontallyOrdered[1].Horizontal - 1; ++i)
+                for (uint i = horizontallyOrdered[0].Horizontal + 1; i < horizontallyOrdered[1].Horizontal; ++i)
                 {
                     Dimension<uint> place = new Dimension<uint>(i, a.Vertical);
                     if (_table.ContainsKey(place))
@@ -129,8 +129,8 @@ namespace kd417d.eva.reversi
                 // Exclude starting and ending point, since only the surrounded part is required
                 uint horizontalIt = horizontallyOrdered[0].Horizontal + 1;
                 uint verticalIt = verticallyOrdered[0].Vertical + 1;
-                while(horizontalIt < horizontallyOrdered[1].Horizontal - 1
-                    && verticalIt < verticallyOrdered[1].Vertical - 1)
+                while(horizontalIt < horizontallyOrdered[1].Horizontal
+                    && verticalIt < verticallyOrdered[1].Vertical)
                 {
                     Dimension<uint> place = new Dimension<uint>(horizontalIt, verticalIt);
                     if(_table.ContainsKey(place))
@@ -147,8 +147,8 @@ namespace kd417d.eva.reversi
                 // Exclude starting and ending point, since only the surrounded part is required
                 uint horizontalIt = horizontallyOrdered[0].Horizontal + 1;
                 uint verticalIt = verticallyOrdered[1].Vertical - 1;
-                while (horizontalIt < horizontallyOrdered[1].Horizontal - 1
-                    && verticalIt > verticallyOrdered[0].Vertical + 1)
+                while (horizontalIt < horizontallyOrdered[1].Horizontal
+                    && verticalIt > verticallyOrdered[0].Vertical)
                 {
                     Dimension<uint> place = new Dimension<uint>(horizontalIt, verticalIt);
                     if(_table.ContainsKey(place))
@@ -189,9 +189,9 @@ namespace kd417d.eva.reversi
                 bottom.Count() == 0 ? null : new Dimension<uint>(from.Horizontal, bottom.Min(verticalSelector)),
                 left.Count() == 0 ? null : new Dimension<uint>(left.Max(horizontalSelector), from.Vertical),
                 right.Count() == 0 ? null : new Dimension<uint>(right.Min(horizontalSelector), from.Vertical),
-                topLeft.Count() == 0 ? null : new Dimension<uint>(topLeft.Min(horizontalSelector), topLeft.Min(verticalSelector)),
-                topRight.Count() == 0 ? null : new Dimension<uint>(topRight.Min(horizontalSelector), topRight.Min(verticalSelector)),
-                bottomLeft.Count() == 0 ? null : new Dimension<uint>(bottomLeft.Min(horizontalSelector), bottomLeft.Min(verticalSelector)),
+                topLeft.Count() == 0 ? null : new Dimension<uint>(topLeft.Max(horizontalSelector), topLeft.Max(verticalSelector)),
+                topRight.Count() == 0 ? null : new Dimension<uint>(topRight.Min(horizontalSelector), topRight.Max(verticalSelector)),
+                bottomLeft.Count() == 0 ? null : new Dimension<uint>(bottomLeft.Max(horizontalSelector), bottomLeft.Min(verticalSelector)),
                 bottomRight.Count() == 0 ? null : new Dimension<uint>(bottomRight.Min(horizontalSelector), bottomRight.Min(verticalSelector)) 
             };
             return closest.Where(p => p != null);
@@ -207,8 +207,7 @@ namespace kd417d.eva.reversi
                     .Select(p => new Tuple<Dimension<uint>, IEnumerable<Dimension<uint>>>(p, GetSurroundedBy(p, from)
                                                                                                 .Where(c => _table[c].color != color)))
                     .Where(s => GetLargerDistance(from, s.Item1) - 1 == s.Item2.Count())
-                    .Select(s => s.Item2)
-                    .SelectMany(s => s);
+                    .SelectMany(s => s.Item2);
         }
         public bool IsPossiblyAllowedStep(Dimension<uint> a)
         {
